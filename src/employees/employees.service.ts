@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma, Employees } from '@prisma/client';
 import { PrismaService } from 'src/database/database.service';
 import { VacationDto } from 'src/vacations/dto/vacation.dto';
@@ -23,23 +23,20 @@ export class EmployeesService {
     employee: Prisma.EmployeesCreateInput,
     vacations: VacationDto[],
   ): Promise<void> {
-    try {
-      await this.prisma.$transaction(async (prisma) => {
-        const { id: employeeId } = await prisma.employees.create({
-          data: employee,
-        });
-
-        const data = vacations.map((vacation) => ({
-          employeeId: employeeId,
-          ...vacation,
-        }));
-
-        await prisma.vacations.createMany({ data });
+    await this.prisma.$transaction(async (prisma) => {
+      const { id: employeeId } = await prisma.employees.create({
+        data: employee,
       });
-    } catch (error) {
-      console.log(error);
-      throw new NotFoundException('Erro ao criar as férias.');
-    }
+
+      await this.vacationsService.validations(vacations);
+
+      const data = vacations.map((vacation) => ({
+        employeeId: employeeId,
+        ...vacation,
+      }));
+
+      await prisma.vacations.createMany({ data });
+    });
   }
 
   async update(

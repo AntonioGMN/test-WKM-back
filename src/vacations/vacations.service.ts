@@ -1,30 +1,52 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaClient, Vacations } from '@prisma/client';
-import { PrismaService } from 'src/database/database.service';
-import { VacationDto } from './dto/vacation.dto';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+//import { PrismaService } from 'src/database/database.service';
+import dayjs from 'dayjs';
+
+interface Vacations {
+  startDate: Date;
+  endDate: Date;
+}
 
 @Injectable()
 export class VacationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  //constructor(private readonly prisma: PrismaService) {}
 
-  async create(vacations: VacationDto[], employeeId: number): Promise<void> {
-    const prisma = new PrismaClient(); // Cria uma nova instância do PrismaClient para a transação
+  async validations(vacations: Vacations[]): Promise<void> {
+    const vacationDaysForPerid = vacations.map((v) => {
+      const start = dayjs(v.startDate);
+      const end = dayjs(v.endDate);
+      if (start.isAfter(end))
+        throw new ForbiddenException(
+          'A data de termino das ferias precisa ser apos a de inicio',
+        );
+      return end.diff(start, 'days') + 1;
+    });
 
-    try {
-      await prisma.$connect(); // Conecta com o banco de dados
-      await prisma.$transaction(async (prisma) => {
-        const data = vacations.map((vacation) => ({
-          employeeId: employeeId,
-          ...vacation,
-        }));
+    const totalVacationDays = vacationDaysForPerid.reduce(
+      (sum, v) => sum + v,
+      0,
+    );
 
-        await prisma.vacations.createMany({ data });
-      });
-    } catch (error) {
-      console.log(error);
-      throw new NotFoundException('Erro ao criar as férias.');
-    } finally {
-      await prisma.$disconnect(); // Fecha a conexão após a transação
-    }
+    if (totalVacationDays > 30)
+      throw new ForbiddenException(
+        'Não é permitido cadastrar mais que 30 dias de férias',
+      );
+
+    if (vacationDaysForPerid.some((v) => v < 5))
+      throw new ForbiddenException(
+        'Não é permitido cadastrar um período de férias com duração menor que 5 dias',
+      );
+
+    if (
+      vacationDaysForPerid.length > 1 &&
+      vacationDaysForPerid.every((v) => v < 14)
+    )
+      throw new ForbiddenException(
+        'Quando você divide sua férias, ao menos um período tem que ter mais que 14 dias',
+      );
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 
@@ -12,7 +12,7 @@ export class EmployeesController {
   }
 
   @Post()
-  create(@Body() data: CreateEmployeeDto) {
+  async create(@Body() data: CreateEmployeeDto, @Res() res) {
     const vacations = data.vacations;
     const employee = {
       name: data.name,
@@ -20,6 +20,16 @@ export class EmployeesController {
       hireDate: data.hireDate,
     };
 
-    return this.employeesService.create(employee, vacations);
+    try {
+      await this.employeesService.create(employee, vacations);
+
+      return res
+        .status(HttpStatus.CREATED)
+        .json({ message: 'Funcionário criado com sucesso!', data: employee });
+    } catch (error) {
+      return res.status(error.status).json({
+        message: error.message,
+      });
+    }
   }
 }
