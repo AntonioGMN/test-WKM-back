@@ -15,6 +15,7 @@ export class EmployeesService {
   }
 
   async create(data: Prisma.EmployeesCreateInput): Promise<Employees> {
+    console.log(data);
     return this.prisma.employees.create({ data });
   }
 
