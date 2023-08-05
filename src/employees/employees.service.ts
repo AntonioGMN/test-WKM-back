@@ -1,10 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Employees } from '@prisma/client';
 import { PrismaService } from 'src/database/database.service';
+import { VacationDto } from 'src/vacations/dto/vacation.dto';
+import { VacationsService } from 'src/vacations/vacations.service';
 
 @Injectable()
 export class EmployeesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly vacationsService: VacationsService,
+  ) {}
 
   async findAll(): Promise<Employees[]> {
     return this.prisma.employees.findMany();
@@ -14,9 +19,27 @@ export class EmployeesService {
     return this.prisma.employees.findUnique({ where: { id } });
   }
 
-  async create(data: Prisma.EmployeesCreateInput): Promise<Employees> {
-    console.log(data);
-    return this.prisma.employees.create({ data });
+  async create(
+    employee: Prisma.EmployeesCreateInput,
+    vacations: VacationDto[],
+  ): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (prisma) => {
+        const { id: employeeId } = await prisma.employees.create({
+          data: employee,
+        });
+
+        const data = vacations.map((vacation) => ({
+          employeeId: employeeId,
+          ...vacation,
+        }));
+
+        await prisma.vacations.createMany({ data });
+      });
+    } catch (error) {
+      console.log(error);
+      throw new NotFoundException('Erro ao criar as férias.');
+    }
   }
 
   async update(

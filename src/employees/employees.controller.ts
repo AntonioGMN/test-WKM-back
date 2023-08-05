@@ -13,6 +13,13 @@ export class EmployeesController {
 
   @Post()
   create(@Body() data: CreateEmployeeDto) {
-    return this.employeesService.create(data);
+    const vacations = data.vacations;
+    const employee = {
+      name: data.name,
+      job: data.job,
+      hireDate: data.hireDate,
+    };
+
+    return this.employeesService.create(employee, vacations);
   }
 }
