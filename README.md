@@ -20,7 +20,6 @@ DB_NAME=testWKM
 
 
 DB_DATABASE=${DB_TYPE}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
-
 ```
 
 ### 3. Instale as dependências com:
@@ -32,7 +31,7 @@ npm i
 ### 4. Crie o banco:
 
 ```bash
-npm run prisma migrate
+npm run prisma migrate dev
 ```
 
 ### 5. Rode com:
