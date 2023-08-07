@@ -21,7 +21,7 @@ export class VacationsService {
       const end = dayjs(v.endDate);
       if (start.isAfter(end))
         throw new ForbiddenException(
-          'A data de termino das ferias precisa ser apos a de inicio',
+          'A data de termino das férias precisa ser após a de início',
         );
       return end.diff(start, 'days') + 1;
     });

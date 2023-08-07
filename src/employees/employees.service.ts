@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, Employees } from '@prisma/client';
 import { PrismaService } from 'src/database/database.service';
 import { VacationDto } from 'src/vacations/dto/vacation.dto';
@@ -12,11 +12,11 @@ export class EmployeesService {
   ) {}
 
   async findAll(): Promise<Employees[]> {
-    return this.prisma.employees.findMany();
-  }
-
-  async findById(id: number): Promise<Employees> {
-    return this.prisma.employees.findUnique({ where: { id } });
+    return this.prisma.employees.findMany({
+      include: {
+        vacations: true,
+      },
+    });
   }
 
   async create(
@@ -37,16 +37,5 @@ export class EmployeesService {
 
       await prisma.vacations.createMany({ data });
     });
-  }
-
-  async update(
-    id: number,
-    data: Prisma.EmployeesUpdateInput,
-  ): Promise<Employees> {
-    return this.prisma.employees.update({ where: { id }, data });
-  }
-
-  async delete(id: number): Promise<Employees> {
-    return this.prisma.employees.delete({ where: { id } });
   }
 }
