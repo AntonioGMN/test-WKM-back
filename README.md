@@ -31,7 +31,7 @@ npm i
 ### 4. Crie o banco:
 
 ```bash
-npm run prisma migrate dev
+npx run prisma migrate dev
 ```
 
 ### 5. Rode com:
